@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<meta name="keywords" content="自动化  K8S  DEVOPS" />
+	<meta name="description" content="K8S自动化安装" />
+	<!-- 网页标签标题 -->
+	<title>K8S 安装</title>
+	<link rel="shortcut icon" href="/product/img/docsite.ico"/>
+	<link rel="stylesheet" href="/product/build/documentation.css" />
+</head>
+<body>
+	<div id="root"><div class="documentation-page" data-reactroot="" data-reactid="1" data-react-checksum="1843806114"><header class="header-container header-container-normal" data-reactid="2"><div class="header-body" data-reactid="3"><a href="/product/zh-cn/index.html" data-reactid="4"><img class="logo" src="/product/img/dubbo_colorful.png" data-reactid="5"/></a><div class="search search-normal" data-reactid="6"><span class="icon-search" data-reactid="7"></span></div><span class="language-switch language-switch-normal" data-reactid="8">En</span><div class="header-menu" data-reactid="9"><img class="header-menu-toggle" src="/product/img/system/menu_gray.png" data-reactid="10"/><ul data-reactid="11"><li class="menu-item menu-item-normal" data-reactid="12"><a href="/product/zh-cn/index.html" target="_self" data-reactid="13">首页</a></li><li class="menu-item menu-item-normal menu-item-normal-active" data-reactid="14"><a href="/product/zh-cn/docs/demo1.html" target="_self" data-reactid="15">文档</a></li><li class="menu-item menu-item-normal" data-reactid="16"><a href="/product/zh-cn/blog/index.html" target="_self" data-reactid="17">博客</a></li><li class="menu-item menu-item-normal" data-reactid="18"><a href="/product/zh-cn/community/index.html" target="_self" data-reactid="19">社区</a></li></ul></div></div></header><div class="bar" data-reactid="20"><div class="bar-body" data-reactid="21"><img src="/product/img/system/docs.png" class="front-img" data-reactid="22"/><span data-reactid="23">文档</span><img src="/product/img/system/docs.png" class="back-img" data-reactid="24"/></div></div><section class="content-section" data-reactid="25"><div class="sidemenu" data-reactid="26"><div class="sidemenu-toggle" data-reactid="27"><img src="https://img.alicdn.com/tfs/TB1E6apXHGYBuNjy0FoXXciBFXa-200-200.png" data-reactid="28"/></div><ul data-reactid="29"><li class="menu-item menu-item-level-1" data-reactid="30"><span data-reactid="31">大标题</span><ul data-reactid="32"><li style="height:36px;overflow:hidden;" class="menu-item menu-item-level-2" data-reactid="33"><a href="/product/zh-cn/docs/demo1.html" target="_self" data-reactid="34">示例1</a></li><li style="height:36px;overflow:hidden;" class="menu-item menu-item-level-2" data-reactid="35"><a href="/product/zh-cn/docs/demo2.html" target="_self" data-reactid="36">示例2</a></li><li style="height:72px;overflow:hidden;" class="menu-item menu-item-level-2" data-reactid="37"><span data-reactid="38"><!-- react-text: 39 -->目录<!-- /react-text --><img style="transform:rotate(0deg);" class="menu-toggle" src="/product/img/system/arrow_down.png" data-reactid="40"/></span><ul data-reactid="41"><li class="menu-item menu-item-level-3" data-reactid="42"><a href="/product/zh-cn/docs/dir/demo3.html" target="_self" data-reactid="43">示例3</a></li></ul></li></ul></li></ul></div><div class="doc-content markdown-body" data-reactid="44"><p>-----------------k8s 1.11.1 离线安装----------------------
+#注意：必须centos 7以上系统</p>
+<h2>1，安装 ipvsadm  (所有server)</h2>
+<p>yum install -y ipvsadm
+ipvsadm -ln   #安装完在验证</p>
+<h2>2，修改/同步系统时间</h2>
+<p>/usr/sbin/ntpdate <a href="http://1.asia.pool.ntp.org">1.asia.pool.ntp.org</a>
+crontab -e
+0 */4 * * * /usr/sbin/ntpdate <a href="http://1.asia.pool.ntp.org">1.asia.pool.ntp.org</a>;/usr/sbin/hwclock -w
+crontab -l</p>
+<h2>3, 升级内核</h2>
+<p>rpm -Uvh <a href="http://www.elrepo.org/elrepo-release-7.0-2.el7.elrepo.noarch.rpm">http://www.elrepo.org/elrepo-release-7.0-2.el7.elrepo.noarch.rpm</a> ;yum --enablerepo=elrepo-kernel install  kernel-lt-devel kernel-lt -y
+#查看默认启动顺序
+[commond:]# awk -F' '$1==&quot;menuentry &quot; {print $2}' /etc/grub2.cfg</p>
+<pre><code>  CentOS Linux (4.4.4-1.el7.elrepo.x86_64) 7 (Core)  
+  CentOS Linux (3.10.0-327.10.1.el7.x86_64) 7 (Core)  
+  CentOS Linux (0-rescue-c52097a1078c403da03b8eddeac5080b) 7 (Core)
+</code></pre>
+<p>#默认启动的顺序是从0开始，新内核是从头插入（目前位置在0，而4.4.4的是在1），所以需要选择0。
+[commond:]# grub2-set-default 0<br>
+#重启
+[commond:]# reboot
+#检查内核，成功升级到4.4
+[commond:]# uname -a
+Linux bigdata5 4.4.104-1.el7.elrepo.x86_64 #1 SMP Tue Dec 5 12:46:32 EST 2017 x86_64 x86_64 x86_64 GNU/Linux</p>
+<h2>4，安装 docker (所有server)</h2>
+<p>yum install -y docker-ce      #18.03版本默认 文件系统为ovelay2驱动
+yum install yum-plugin-ovl -y</p>
+<h2>5，修改主机名/ssh/绑定主机名 免密钥登录</h2>
+<p>hostnamectl set-hostname  #注意：主机名，不能用特殊符号(比如：<a href="http://jmsw-xx.hnser.com">jmsw-xx.hnser.com</a>)，可直接(node1)这种就可以。
+vim /etc/hosts     #绑定主机名
+##vim .ssh/authorized_keys  #创建免密钥登录 “可不用”</p>
+<h2>6，查看确保内核开启了ipvs模块 (所有node)</h2>
+<h2>lsmod|grep ip_vs</h2>
+<h2>ip_vs                 141432  1 xt_ipvs
+nf_conntrack          133053  7 ip_vs,nf_nat,nf_nat_ipv4,xt_conntrack,nf_nat_masquerade_ipv4,nf_conntrack_netlink,nf_conntrack_ipv4
+libcrc32c              12644  4 xfs,ip_vs,nf_nat,nf_conntrack</h2>
+<p>（如果上面执行不成功的话，那就直接   yum install -y ipvsadm）</p>
+<h3>解压 tar xvf kube1.11.1.tar.gz</h3>
+<p>tar xvf kube1.11.1.tar.gz</p>
+<h2>7，master 上执行脚本</h2>
+<p>cd shell &amp;&amp; sh <a href="http://init.sh">init.sh</a> &amp;&amp; sh <a href="http://master.sh">master.sh</a>
+#执行完会出现一个kubeadm join 命令，然后在每个node执行。</p>
+<h2>8，node 上执行脚本</h2>
+<p>cd shell &amp;&amp; sh <a href="http://init.sh">init.sh</a><br>
+#注意：
+在node上执行master输出的join命令即可 (命令忘记了可以用这个查看，kubeadm token create —print–join-command)
+kubeadm join master_ip:6443 --token ynawdb.boyq3jb36pkykkvq --discovery-token-ca-cert-hash</p>
+<h2>9，验证dashboard</h2>
+<p>https://server_ip:32000</p>
+<h2>9，如果需要节点执行kubectl get 相关命令</h2>
+<p>把 master 文件拷贝到各节点
+scp -r .kube <a href="http://192.168.xxx">192.168.xxx</a>:/root</p>
+<p>#注意：
+这里十分推荐大家使用ipvs模式，iptables出了问题不好调试，而且规则一多性能显著下降，我们甚至出现规则丢失的情况，ipvs稳定很多。</p>
+<p>节点报错：file_linux.go:61] Unable to read config path &quot;/etc/kubernetes/manifests&quot;: path does not exist, ignoring
+解决办法：mkdir -p /etc/kubernetes/manifests</p>
+<p>重启命令：
+swapoff -a&amp;&amp; setenforce 0&amp;&amp;systemctl start kubelet
+etcdctl cluster-healthy</p>
+<p>#coreDNS默认安装</p>
+</div></section><footer class="footer-container" data-reactid="45"><div class="footer-body" data-reactid="46"><img src="/product/img/dubbo_gray.png" data-reactid="47"/><div class="cols-container" data-reactid="48"><div class="col col-12" data-reactid="49"><h3 data-reactid="50">免责声明</h3><p data-reactid="51">免责声明的具体内容</p></div><div class="col col-6" data-reactid="52"><dl data-reactid="53"><dt data-reactid="54">文档</dt><dd data-reactid="55"><a href="/product/zh-cn/docs/demo1.html" target="_self" data-reactid="56">概览</a></dd><dd data-reactid="57"><a href="/product/zh-cn/docs/demo2.html" target="_self" data-reactid="58">快速开始</a></dd><dd data-reactid="59"><a href="/product/zh-cn/docs/dir/demo3.html" target="_self" data-reactid="60">开发者指南</a></dd></dl></div><div class="col col-6" data-reactid="61"><dl data-reactid="62"><dt data-reactid="63">资源</dt><dd data-reactid="64"><a href="/product/zh-cn/blog/index.html" target="_self" data-reactid="65">博客</a></dd><dd data-reactid="66"><a href="/product/zh-cn/community/index.html" target="_self" data-reactid="67">社区</a></dd></dl></div></div><div class="copyright" data-reactid="68"><span data-reactid="69">Copyright © 2018 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</span></div></div></footer></div></div>
+	<script src="https://f.alicdn.com/react/15.4.1/react-with-addons.min.js"></script>
+	<script src="https://f.alicdn.com/react/15.4.1/react-dom.min.js"></script>
+	<script>
+		window.rootPath = '/product';
+  </script>
+	<script src="/product/build/documentation.js"></script>
+</body>
+</html>
